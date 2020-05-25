@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>SIR Model</title>
+
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+	</head>
+	
+	<body onload="generateGraph()">
+
+		<script type="text/javascript">
+			var label = [];
+
+			function generateGraph() {
+				var ctx = document.getElementById('canvas').getContext('2d');
+
+				window.myGraph = new Chart(ctx, {
+					type: 'line',
+					data: {
+						labels: label,
+						datasets: [{
+							label: 'Susceptible Population',
+							data: uds,
+							borderColor: 'rgba(78,78,247,100)',
+							backgroundcolor: 'rgba(0,0,0,0)',
+							fill: false,
+							cubicInterpolationMode: 'monotone'
+						},{
+							label: 'Infected Population',
+							data: udr,
+							borderColor: 'rgba(245, 66, 69, 100)',
+							backgroundcolor: 'rgba(0,0,0,0)',
+							fill: false,
+							cubicInterpolationMode: 'monotone'
+						},{
+							label: 'Recovered Population',
+							data: udr,
+							borderColor: 'rgba(29,153,62,100)',
+							backgroundcolor: 'rgba(0,0,0,0)',
+							fill: false,
+							cubicInterpolationMode: 'monotone'
+						},{
+							label: 'Dead Population',
+							data: udr,
+							borderColor: 'rgba(0,0,0,100)',
+							backgroundcolor: 'rgba(0,0,0,0)',
+							fill: false,
+							cubicInterpolationMode: 'monotone'
+						}]
+					},
+					options: {
+						responsive: true,
+						title: {
+							display: true,
+							text: 'SIR Graph'
+						},
+						tooltips: {
+							mode: 'index'
+						},
+						scales: {
+							xAxes: [{
+								display: true,
+								scaleLabel: {
+									display: true
+								}
+							}],
+							yAxes: [{
+								display: true,
+								scaleLabel: {
+									display: true,
+									labelString: 'Value'
+								},
+								ticks: {
+									suggestedMin: -10,
+									suggestedMax: 200,
+								}
+							}]
+						}
+					}
+				});
+			}
+
+
+
+			var uds = [];
+			var udi = [];
+			var udr = [];
+			var udd = [];
+			//var label = [];
+
+
+
+
+
+
+			function sir() {
+				label = [];
+				var susp = parseFloat(document.getElementById("susceptible").value);
+				var infp = parseFloat(document.getElementById("infected").value);
+				var recp = parseFloat(document.getElementById("recovered").value);
+				var r0 = parseFloat(document.getElementById("rnaught").value);
+				var days = parseFloat(document.getElementById("time").value);
+				var startdate = (document.getElementById("startdate").value);
+				var recovery = parseFloat(document.getElementById("recovery").value);
+				var deathrate = parseFloat(document.getElementById("deathrate").value);	
+
+				var Sarr = [susp];
+				var Iarr = [infp];
+				var Rarr = [recp];
+				var Darr = [0];
+
+
+				for(i = 0; i <= days; i++) {
+					label.push(i);
+				}
+
+				var initialtotalpopulation = susp + infp + recp;
+
+
+				//days into year
+				var diy = 1;
+				var date_list = startdate.split("/");
+				console.log(date_list);
+
+
+
+				const oneDay = 24 * 60 * 60 * 1000;
+				var firstdate = new Date(0, 1, 1)
+				var enddate = new Date(0, date_list[0], date_list[1])
+				var diy = 1 + Math.round(Math.abs((firstdate - enddate) / oneDay));
+				console.log(diy)
+				var dS = 0;
+				var dI = 0;
+				var dR = 0;
+
+
+				var S = susp;
+				var I = infp;
+				var R = recp;
+				var D = 0
+
+
+
+				var beta = (r0 * recovery)/(susp);
+				var seasonalbeta = 0;
+				var t = 0;
+
+				for(time=1;time<=days;time++) {
+					seasonalbeta = beta * (1 + (0.35 * Math.cos((2 * Math.PI * diy)/365)));
+					
+					dS = -seasonalbeta * S * I;
+					dI = (seasonalbeta * S * I) - (deathrate * I) - (recovery * I);
+					dR = recovery * I;
+
+					S += dS;
+					I += dI;
+					R += dR;
+					D += (deathrate * I);
+
+					console.log("S is " + translateNaN(round(S, 4)));
+					console.log("I is " + translateNaN(round(I, 4)));
+					console.log("R is " + translateNaN(round(R, 4)));
+					console.log("D is " + translateNaN(round(D, 4)));
+
+					Sarr.push(translateNaN(round(S, 4)));
+					Iarr.push(translateNaN(round(I, 4)));
+					Rarr.push(translateNaN(round(R, 4)));
+					Darr.push(translateNaN(round(D, 4)));
+
+					diy += 1;
+				}
+
+				window.myGraph.data.datasets[0].data = Sarr;
+				window.myGraph.data.datasets[1].data = Iarr;
+				window.myGraph.data.datasets[2].data = Rarr;
+				window.myGraph.data.datasets[3].data = Darr;
+				window.myGraph.data.labels = label;
+				window.myGraph.update();
+				
+			}
+
+
+		function round(value, decimals) {
+		  return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+		}
+
+
+		function translateNaN(number) {
+			if(isNaN(number)) {
+				return(0);
+			} else {
+				return(number);
+			}
+		}
+
+
+
+
+
+	</script>
+
+		<div class="container">
+			<canvas id="canvas"></canvas>
+		</div>
+
+		<div class="jumbotron" style="
+			padding-top: 50px;
+			padding-right: 30px;
+			padding-bottom: 50px;
+			padding-left: 80px;
+			text-align: center;
+		">
+			<button onclick="sir()">Graph</button><br><br>
+			<label for="susceptible">Susceptible Population:</label>
+			<input type="number" id="susceptible" name="s" value="500">
+			<label for="infected">Infected Population:</label>
+			<input type="number" id="infected" name="i" value="1">
+			<label for="recovered">Recovered Population:</label>
+			<input type="number" id="recovered" name="r" value="0"><br><br>
+			<label for="rnaught">R0:</label>
+			<input type="number" id="rnaught" name="r0" value="2.2">
+			<label for="time">Time (in days):</label>
+			<input type="number" id="time" name="t" value="100">
+			<label for="startdate">Start Date (mm/dd): </label>
+			<input type="text" id="startdate" name="sd" value="01/01"><br><br>
+			<label for="recovery">Recovery Rate: </label>
+			<input type="number" id="recovery" name="recovery" value="0.34">
+			<label for="recovery">Death Rate: </label>
+			<input type="number" id="deathrate" name="deathrate" value="0.034">
+		</div>
+	</body>
+</html>
